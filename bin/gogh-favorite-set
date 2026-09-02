@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# Marks or unmarks a Gogh theme as a favorite in the plugin's config file.
+# Stored outside the plugin's own directory so it survives a reinstall/update.
+
+set -euo pipefail
+
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/gogh-themes"
+CONFIG_FILE="$CONFIG_DIR/config.json"
+
+name="${1:?Usage: gogh-favorite-set <theme-name> <true|false>}"
+value="${2:?Usage: gogh-favorite-set <theme-name> <true|false>}"
+
+mkdir -p "$CONFIG_DIR"
+[[ -f $CONFIG_FILE ]] || echo '{}' >"$CONFIG_FILE"
+
+tmp=$(mktemp "$CONFIG_FILE.XXXXXX")
+if [[ $value == "true" ]]; then
+  jq --arg n "$name" '.favorites = ((.favorites // {}) + {($n): true})' "$CONFIG_FILE" >"$tmp"
+else
+  jq --arg n "$name" '.favorites = ((.favorites // {}) | del(.[$n]))' "$CONFIG_FILE" >"$tmp"
+fi
+mv "$tmp" "$CONFIG_FILE"

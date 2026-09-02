@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# Toggles whether gogh-theme-install shows a notification on a successful
+# apply (errors are always shown regardless of this setting).
+
+set -euo pipefail
+
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/gogh-themes"
+CONFIG_FILE="$CONFIG_DIR/config.json"
+
+value="${1:?Usage: gogh-silent-set <true|false>}"
+
+mkdir -p "$CONFIG_DIR"
+[[ -f $CONFIG_FILE ]] || echo '{}' >"$CONFIG_FILE"
+
+tmp=$(mktemp "$CONFIG_FILE.XXXXXX")
+jq --argjson v "$value" '.silent = $v' "$CONFIG_FILE" >"$tmp"
+mv "$tmp" "$CONFIG_FILE"

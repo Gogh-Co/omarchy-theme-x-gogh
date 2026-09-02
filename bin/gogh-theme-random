@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# Applies a random Gogh theme immediately, no picker involved. Used by the
+# bar icon's middle-click. Picks from favorites if any are marked, otherwise
+# from the whole catalog.
+
+set -euo pipefail
+
+PLUGIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/omarchy/gogh-themes"
+THEMES_JSON="$CACHE_DIR/themes.json"
+CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/gogh-themes/config.json"
+
+[[ -f $THEMES_JSON ]] || "$PLUGIN_DIR/bin/gogh-list-json.sh" >/dev/null
+[[ -f $THEMES_JSON ]] || exit 1
+
+favorites=()
+if [[ -f $CONFIG_FILE ]]; then
+  mapfile -t favorites < <(jq -r '(.favorites // {}) | to_entries[] | select(.value == true) | .key' "$CONFIG_FILE" 2>/dev/null)
+fi
+
+if (( ${#favorites[@]} > 0 )); then
+  name="${favorites[$((RANDOM % ${#favorites[@]}))]}"
+else
+  count=$(jq 'length' "$THEMES_JSON")
+  (( count > 0 )) || exit 1
+  idx=$((RANDOM % count))
+  name=$(jq -r --argjson i "$idx" '.[$i].name' "$THEMES_JSON")
+fi
+
+exec "$PLUGIN_DIR/bin/gogh-theme-install" "$name"

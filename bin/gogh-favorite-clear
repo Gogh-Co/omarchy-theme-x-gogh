@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# Clears every marked favorite.
+
+set -euo pipefail
+
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/gogh-themes"
+CONFIG_FILE="$CONFIG_DIR/config.json"
+
+mkdir -p "$CONFIG_DIR"
+[[ -f $CONFIG_FILE ]] || echo '{}' >"$CONFIG_FILE"
+
+tmp=$(mktemp "$CONFIG_FILE.XXXXXX")
+jq '.favorites = {}' "$CONFIG_FILE" >"$tmp"
+mv "$tmp" "$CONFIG_FILE"

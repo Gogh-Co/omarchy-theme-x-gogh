@@ -1,0 +1,75 @@
+#!/bin/bash
+
+# Installs a single Gogh theme (by exact name) as an Omarchy theme and
+# applies it. Called by the GoghThemes overlay after a selection, and
+# usable directly from a terminal.
+
+set -euo pipefail
+
+PLUGIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/omarchy/gogh-themes"
+THEMES_JSON="$CACHE_DIR/themes.json"
+CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/gogh-themes/config.json"
+
+silent=false
+if [[ -f $CONFIG_FILE ]]; then
+  silent=$(jq -r '.silent == true' "$CONFIG_FILE" 2>/dev/null || echo false)
+fi
+
+# Errors are always shown -- silent mode only quiets the routine "applied"
+# notification, not failures.
+notify_error() {
+  omarchy-notification-send "$1" 2>/dev/null || true
+}
+
+notify_result() {
+  [[ $silent == "true" ]] && return
+  omarchy-notification-send "$1" 2>/dev/null || true
+}
+
+theme_name="${1:-}"
+if [[ -z $theme_name ]]; then
+  echo "Usage: gogh-theme-install <theme-name>" >&2
+  exit 1
+fi
+
+if [[ ! -f $THEMES_JSON ]]; then
+  notify_error "Gogh Themes: catalog not downloaded yet"
+  exit 1
+fi
+
+theme_json=$(jq -c --arg name "$theme_name" '[.[] | select(.name == $name)][0]' "$THEMES_JSON")
+if [[ -z $theme_json || $theme_json == "null" ]]; then
+  notify_error "Gogh Themes: theme '$theme_name' not found"
+  exit 1
+fi
+
+slug="gogh-$(printf '%s' "$theme_name" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g')"
+theme_dir="$HOME/.config/omarchy/themes/$slug"
+
+mkdir -p "$theme_dir"
+if ! printf '%s' "$theme_json" | python3 "$PLUGIN_DIR/bin/gogh-to-toml.py" >"$theme_dir/colors.toml.tmp"; then
+  rm -f "$theme_dir/colors.toml.tmp"
+  notify_error "Gogh Themes: failed to generate colors.toml for '$theme_name'"
+  exit 1
+fi
+mv "$theme_dir/colors.toml.tmp" "$theme_dir/colors.toml"
+
+# Gogh themes are a color scheme only -- they must never change the user's
+# actual wallpaper. Without any image in backgrounds/, omarchy-theme-set
+# can't find one and pops its own "No background was found for theme"
+# notification, but it also leaves the current background alone, which is
+# the right visual outcome. To get the right outcome AND silence that
+# notification, mirror in whatever background is already active: a symlink
+# to the real file, so omarchy-theme-set "finds" a background that happens
+# to be the one already on screen -- nothing actually changes.
+bg_dir="$theme_dir/backgrounds"
+rm -rf "$bg_dir"
+current_bg_real=$(readlink -f "$HOME/.local/state/omarchy/current/background" 2>/dev/null || true)
+if [[ -n $current_bg_real && -f $current_bg_real ]]; then
+  mkdir -p "$bg_dir"
+  ln -sf "$current_bg_real" "$bg_dir/current-wallpaper.${current_bg_real##*.}"
+fi
+
+omarchy-theme-set "$slug"
+notify_result "Gogh Themes: installed and applied '$theme_name'"

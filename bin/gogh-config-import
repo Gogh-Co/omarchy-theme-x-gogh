@@ -1,0 +1,34 @@
+#!/bin/bash
+
+# Imports a YAML config exported by gogh-config-export, replacing
+# config.json wholesale. The Overlay watches config.json for changes, so an
+# already-open picker picks up the new favorites/rotation/etc. live.
+
+set -euo pipefail
+
+PLUGIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/gogh-themes"
+CONFIG_FILE="$CONFIG_DIR/config.json"
+
+notify() {
+  omarchy-notification-send "$1" 2>/dev/null || true
+}
+
+path="${1:?Usage: gogh-config-import <path>}"
+path="${path/#\~/$HOME}"
+
+if [[ ! -f $path ]]; then
+  notify "Gogh Themes: file not found: $path"
+  exit 1
+fi
+
+mkdir -p "$CONFIG_DIR"
+tmp=$(mktemp "$CONFIG_FILE.XXXXXX")
+if python3 "$PLUGIN_DIR/bin/gogh-config-from-yaml.py" <"$path" >"$tmp"; then
+  mv "$tmp" "$CONFIG_FILE"
+  notify "Gogh Themes: config imported from $path"
+else
+  rm -f "$tmp"
+  notify "Gogh Themes: import failed -- invalid YAML (see terminal)"
+  exit 1
+fi

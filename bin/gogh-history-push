@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# Pushes a theme name to the front of the "recently applied" history
+# (deduped, capped at 8 entries).
+
+set -euo pipefail
+
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/gogh-themes"
+CONFIG_FILE="$CONFIG_DIR/config.json"
+
+name="${1:?Usage: gogh-history-push <theme-name>}"
+
+mkdir -p "$CONFIG_DIR"
+[[ -f $CONFIG_FILE ]] || echo '{}' >"$CONFIG_FILE"
+
+tmp=$(mktemp "$CONFIG_FILE.XXXXXX")
+jq --arg n "$name" \
+  '.history = ([$n] + ((.history // []) | map(select(. != $n)))) | .history = (.history[0:8])' \
+  "$CONFIG_FILE" >"$tmp"
+mv "$tmp" "$CONFIG_FILE"

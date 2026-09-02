@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Name=Omarchy Theme × Gogh
+Comment=Pick a Gogh color scheme and install it as an Omarchy theme
+Exec=omarchy-shell shell toggle mgldvd.gogh-themes {}
+Terminal=false
+Type=Application
+Icon=mgldvd.gogh-themes
+Categories=Utility;
+Keywords=theme;colors;colorscheme;terminal;omarchy;
+StartupNotify=false

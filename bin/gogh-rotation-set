@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# Persists a single field of the auto-rotation config in the plugin's
+# config file. Stored outside the plugin's own directory so it survives a
+# reinstall/update.
+
+set -euo pipefail
+
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/gogh-themes"
+CONFIG_FILE="$CONFIG_DIR/config.json"
+
+field="${1:?Usage: gogh-rotation-set <field> <value>}"
+value="${2:?Usage: gogh-rotation-set <field> <value>}"
+
+mkdir -p "$CONFIG_DIR"
+[[ -f $CONFIG_FILE ]] || echo '{}' >"$CONFIG_FILE"
+
+tmp=$(mktemp "$CONFIG_FILE.XXXXXX")
+case "$field" in
+  enabled|intervalMinutes)
+    # Boolean/number fields: pass the value through as JSON, not a string.
+    jq --argjson v "$value" --arg f "$field" \
+      '.rotation = ((.rotation // {}) + {($f): $v})' "$CONFIG_FILE" >"$tmp"
+    ;;
+  *)
+    jq --arg v "$value" --arg f "$field" \
+      '.rotation = ((.rotation // {}) + {($f): $v})' "$CONFIG_FILE" >"$tmp"
+    ;;
+esac
+mv "$tmp" "$CONFIG_FILE"

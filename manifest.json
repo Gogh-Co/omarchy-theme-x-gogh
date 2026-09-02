@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "mgldvd.gogh-themes",
+  "name": "Omarchy Theme × Gogh",
+  "version": "1.0.0",
+  "author": "mgldvd",
+  "license": "MIT OR Apache-2.0",
+  "description": "Browse Gogh terminal color schemes and install one as an Omarchy theme",
+  "kinds": [
+    "bar-widget",
+    "overlay"
+  ],
+  "keepLoaded": true,
+  "entryPoints": {
+    "barWidget": "BarWidget.qml",
+    "overlay": "Overlay.qml"
+  },
+  "barWidget": {
+    "displayName": "Omarchy Theme × Gogh",
+    "description": "Pick a Gogh color scheme and install it as an Omarchy theme",
+    "category": "Appearance",
+    "allowMultiple": false,
+    "defaultSection": "right"
+  }
+}

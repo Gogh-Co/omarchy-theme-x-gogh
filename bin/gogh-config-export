@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# Exports the plugin's config.json (favorites, rotation settings, silent,
+# history) as YAML. Always named config-gogh.yml so it's predictable to
+# find again; an optional argument overrides the destination path.
+
+set -euo pipefail
+
+PLUGIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/gogh-themes/config.json"
+
+notify() {
+  omarchy-notification-send "$1" 2>/dev/null || true
+}
+
+path="${1:-$HOME/.config/gogh/config-gogh.yml}"
+path="${path/#\~/$HOME}" # expand a leading ~ (this can come from a GUI prompt, not a shell)
+
+if [[ ! -f $CONFIG_FILE ]]; then
+  notify "Gogh Themes: no config to export yet"
+  exit 1
+fi
+
+mkdir -p "$(dirname -- "$path")"
+tmp=$(mktemp "$path.XXXXXX")
+if python3 "$PLUGIN_DIR/bin/gogh-config-to-yaml.py" <"$CONFIG_FILE" >"$tmp"; then
+  mv "$tmp" "$path"
+  notify "Gogh Themes: config exported to $path"
+else
+  rm -f "$tmp"
+  notify "Gogh Themes: export failed (see terminal / install python-yaml)"
+  exit 1
+fi

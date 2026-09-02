@@ -1,0 +1,44 @@
+#!/bin/bash
+
+# CLI fallback: lets the user pick a Gogh color scheme from a terminal (or
+# from Omarchy's own text menu) and installs it as an Omarchy theme. The bar
+# icon uses the richer GoghThemes.qml overlay instead; this stays for
+# terminal use / scripting.
+
+set -euo pipefail
+
+PLUGIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/omarchy/gogh-themes"
+THEMES_JSON="$CACHE_DIR/themes.json"
+
+notify() {
+  omarchy-notification-send "$1" 2>/dev/null || true
+}
+
+if [[ ! -f $THEMES_JSON ]] || [[ -n $(find "$THEMES_JSON" -mmin +1440 2>/dev/null) ]]; then
+  "$PLUGIN_DIR/bin/gogh-list-json.sh" >/dev/null
+fi
+
+if [[ ! -f $THEMES_JSON ]]; then
+  notify "Gogh Themes: failed to download the theme list"
+  exit 1
+fi
+
+# omarchy-menu-select reads each option as "<icon>\t<label>\t<subtext>" when
+# there's more than one tab-separated field (it shifts the first field off as
+# the icon) -- so a leading empty field is required to keep the theme name as
+# the label instead of being swallowed as the icon glyph.
+mapfile -t options < <(
+  jq -r '.[] | ["", .name, ((if (.author // "") == "" then "Gogh" else .author end) + " - " + .variant)] | @tsv' "$THEMES_JSON"
+)
+
+if [[ ${#options[@]} -eq 0 ]]; then
+  notify "Gogh Themes: theme list is empty"
+  exit 1
+fi
+
+selection=$(omarchy-menu-select "Pick a Gogh theme" "${options[@]}") || exit 0
+[[ -n $selection ]] || exit 0
+
+theme_name="${selection%%$'\t'*}"
+exec "$PLUGIN_DIR/bin/gogh-theme-install" "$theme_name"
