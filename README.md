@@ -5,15 +5,22 @@
 
 # Omarchy Theme × Gogh
 
-Browse and apply any of [Gogh](https://github.com/Gogh-Co/Gogh)'s ~370 terminal color schemes as a real [Omarchy](https://omarchy.org) theme, without leaving the bar.
+Turns any of [Gogh](https://github.com/Gogh-Co/Gogh)'s ~370 terminal color schemes into a full [Omarchy](https://omarchy.org) system theme. Pick one from the bar and it recolors your whole desktop to match — accents, window and bar backgrounds, foregrounds and the terminal palette — not just the terminal itself.
 
-![Omarchy Theme × Gogh preview](preview.png)
 
 ## Install
 
 ```bash
 omarchy plugin add https://github.com/Gogh-Co/omarchy-theme-x-gogh.git --enable
 ```
+
+<div align="center">
+  <img src="preview.png" alt="Omarchy Theme × Gogh preview" width="700">
+</div>
+
+<div align="center">
+  <img src="./.images/theme_transition.gif" alt="Omarchy Theme × Gogh gif" width="700">
+</div>
 
 ### Manual install
 
