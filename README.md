@@ -1,12 +1,10 @@
-
 <div align="center">
   <img src="logo/logo.png" alt="Omarchy Theme × Gogh" height="100">
 </div>
 
 # Omarchy Theme × Gogh
 
-Turns any of [Gogh](https://github.com/Gogh-Co/Gogh)'s ~370 terminal color schemes into a full [Omarchy](https://omarchy.org) system theme. Pick one from the bar and it recolors your whole desktop to match — accents, window and bar backgrounds, foregrounds and the terminal palette — not just the terminal itself.
-
+Turns any of [Gogh](https://github.com/Gogh-Co/Gogh)'s terminal color schemes into a full [Omarchy](https://omarchy.org) system theme. Pick one from the bar and it recolors your whole desktop to match — accents, window and bar backgrounds, foregrounds and the terminal palette — not just the terminal itself. See the [Omarchy Plugin Marketplace](https://github.com/omacom/omarchy-plugin-marketplace) for more Omarchy plugins.
 
 ## Install
 
@@ -56,7 +54,7 @@ everything else works without it.
 
 ## Features
 
-- **370 themes, one click** — search by name/author, filter All / Light / Dark, install & apply instantly.
+- **One click install** — search by name/author, filter All / Light / Dark, install & apply instantly.
 - **★ Favorites** — star a card or press `Ctrl+D`; filter the grid to just your favorites.
 - **Recent** — last 8 applied themes, most recent first.
 - **Instant random** — middle-click the bar icon to apply a random theme (favorites-first) with no picker.
