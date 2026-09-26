@@ -60,15 +60,30 @@ mv "$theme_dir/colors.toml.tmp" "$theme_dir/colors.toml"
 # can't find one and pops its own "No background was found for theme"
 # notification, but it also leaves the current background alone, which is
 # the right visual outcome. To get the right outcome AND silence that
-# notification, mirror in whatever background is already active: a symlink
-# to the real file, so omarchy-theme-set "finds" a background that happens
-# to be the one already on screen -- nothing actually changes.
+# notification, mirror in whatever background is already active, so
+# omarchy-theme-set "finds" a background that happens to be the one already
+# on screen -- nothing actually changes.
+#
+# It has to be a real file (hard link, or copy across filesystems), not a
+# symlink: the active background usually lives inside the staged copy at
+# ~/.local/state/omarchy/current/theme/backgrounds/, which omarchy-theme-set
+# deletes when it swaps the new theme in -- a symlink to it dangles right
+# away, and the "background" link is left dangling for every later apply.
 bg_dir="$theme_dir/backgrounds"
 rm -rf "$bg_dir"
+current_bg_link=$(readlink "$HOME/.local/state/omarchy/current/background" 2>/dev/null || true)
 current_bg_real=$(readlink -f "$HOME/.local/state/omarchy/current/background" 2>/dev/null || true)
+if [[ -n $current_bg_link && ! -f $current_bg_real ]]; then
+  # Dangling link (left over from an earlier apply): recover the same image by
+  # file name from wherever themes and backgrounds are kept.
+  current_bg_real=$(find -L "$HOME/.config/omarchy/themes" "$HOME/.config/omarchy/backgrounds" \
+    "${OMARCHY_PATH:-/usr/share/omarchy}/themes" -path '*/backgrounds/*' -type f \
+    -name "${current_bg_link##*/}" -print -quit 2>/dev/null || true)
+fi
 if [[ -n $current_bg_real && -f $current_bg_real ]]; then
   mkdir -p "$bg_dir"
-  ln -sf "$current_bg_real" "$bg_dir/current-wallpaper.${current_bg_real##*.}"
+  bg_file="$bg_dir/current-wallpaper.${current_bg_real##*.}"
+  ln "$current_bg_real" "$bg_file" 2>/dev/null || cp "$current_bg_real" "$bg_file"
 fi
 
 omarchy-theme-set "$slug"

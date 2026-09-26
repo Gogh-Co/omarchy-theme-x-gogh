@@ -39,7 +39,7 @@ Overlay.qml              # fullscreen picker: grid, search, filters, favorites/h
 GoghThemeSearch.js       # search + variant-filter helpers used by Overlay.qml
 bin/
   gogh-list-json.sh      # downloads + 24h-caches Gogh's themes.json, slims it for the picker
-  gogh-theme-install     # theme_name -> colors.toml -> symlinks active wallpaper -> omarchy-theme-set
+  gogh-theme-install     # theme_name -> colors.toml -> links active wallpaper -> omarchy-theme-set
   gogh-to-toml.py        # one Gogh theme JSON object (stdin) -> Omarchy colors.toml (stdout)
   gogh-theme-pick        # terminal/menu fallback entry point
   gogh-theme-random      # picks random (favorites-first) theme, calls gogh-theme-install
@@ -115,10 +115,14 @@ running it for real.
   background image. Leaving `backgrounds/` empty makes `omarchy-theme-set`
   fire its own "No background was found" notification but otherwise leaves
   the wallpaper alone — which is correct. `gogh-theme-install` silences that
-  notification by symlinking whatever wallpaper is *currently active*
-  (`readlink -f ~/.local/state/omarchy/current/background`) into the new
-  theme's `backgrounds/` dir, so `omarchy-theme-set` "finds" a background
-  that's already on screen. Do not generate, copy, or otherwise materialize
+  notification by hard-linking (or copying) whatever wallpaper is
+  *currently active* (`readlink -f ~/.local/state/omarchy/current/background`)
+  into the new theme's `backgrounds/` dir, so `omarchy-theme-set` "finds" a
+  background that's already on screen. It must be a real file, not a
+  symlink: the active background lives inside the staged
+  `~/.local/state/omarchy/current/theme/`, which `omarchy-theme-set` deletes
+  on every swap, so a symlink dangles immediately and the "No background"
+  notification comes back on every later apply. Do not generate, copy, or otherwise materialize
   a new image here — a solid-color placeholder PNG was tried once and it
   got adopted as the user's real wallpaper, which is exactly the failure
   this design avoids.
