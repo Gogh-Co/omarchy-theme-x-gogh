@@ -23,6 +23,11 @@ if [[ ! -f $path ]]; then
 fi
 
 mkdir -p "$CONFIG_DIR"
+# Serialize read-modify-write across all config writers: a rotation tick
+# fires gogh-rotation-set and gogh-history-push concurrently, and without a
+# lock the last one to finish silently drops the other's change.
+exec 9>"$CONFIG_DIR/.config.lock"
+flock 9
 tmp=$(mktemp "$CONFIG_FILE.XXXXXX")
 if python3 "$PLUGIN_DIR/bin/gogh-config-from-yaml.py" <"$path" >"$tmp"; then
   mv "$tmp" "$CONFIG_FILE"

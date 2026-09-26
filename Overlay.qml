@@ -678,6 +678,42 @@ Item {
               }
             }
 
+            // Auto-rotation status, always visible from the main picker so a
+            // stopped rotation is noticed without opening the settings panel.
+            // Click toggles rotation on/off.
+            Rectangle {
+              id: autoToggle
+              visible: !root.settingsOpen
+              anchors.right: favToggle.left
+              anchors.rightMargin: Style.space(6)
+              height: root.filterBarHeight
+              width: autoLabel.implicitWidth + Style.space(20)
+              radius: root.cornerRadius
+              color: root.rotation.enabled && !root.isSnoozed ? root.selectedBackground : "transparent"
+              border.width: 1
+              border.color: root.rotation.enabled && !root.isSnoozed ? "transparent" : Util.alpha(root.foreground, 0.25)
+
+              Text {
+                id: autoLabel
+                anchors.centerIn: parent
+                textFormat: Text.PlainText
+                text: !root.rotation.enabled ? "↻ Auto: OFF"
+                  : (root.isSnoozed ? "↻ Auto: snoozed"
+                    : "↻ Auto: ON · " + root.rotation.intervalMinutes + " min")
+                color: root.rotation.enabled && !root.isSnoozed ? root.selectedText : root.foreground
+                opacity: root.rotation.enabled && !root.isSnoozed ? 1 : 0.75
+                font.family: root.fontFamily
+                font.pixelSize: Style.font.bodySmall
+                font.weight: root.rotation.enabled && !root.isSnoozed ? Font.DemiBold : Font.Normal
+              }
+
+              MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.setRotationField("enabled", !root.rotation.enabled)
+              }
+            }
+
             Rectangle {
               id: favToggle
               visible: !root.settingsOpen

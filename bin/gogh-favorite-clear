@@ -8,6 +8,11 @@ CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/gogh-themes"
 CONFIG_FILE="$CONFIG_DIR/config.json"
 
 mkdir -p "$CONFIG_DIR"
+# Serialize read-modify-write across all config writers: a rotation tick
+# fires gogh-rotation-set and gogh-history-push concurrently, and without a
+# lock the last one to finish silently drops the other's change.
+exec 9>"$CONFIG_DIR/.config.lock"
+flock 9
 [[ -f $CONFIG_FILE ]] || echo '{}' >"$CONFIG_FILE"
 
 tmp=$(mktemp "$CONFIG_FILE.XXXXXX")
