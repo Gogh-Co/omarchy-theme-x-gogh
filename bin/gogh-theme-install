@@ -72,4 +72,17 @@ if [[ -n $current_bg_real && -f $current_bg_real ]]; then
 fi
 
 omarchy-theme-set "$slug"
+
+# omarchy-theme-set copies the theme into ~/.local/state/omarchy/current/theme,
+# so previously applied Gogh themes are no longer needed on disk. Without this,
+# random picks and rotation leave a new gogh-* dir behind on every apply until
+# the themes list is flooded. Any of them can be regenerated from the catalog.
+# Directories with a .git are skipped in case a user-cloned theme shares the
+# prefix.
+for old_dir in "$HOME/.config/omarchy/themes"/gogh-*/; do
+  old_dir="${old_dir%/}"
+  [[ -d $old_dir && $old_dir != "$theme_dir" && ! -e $old_dir/.git ]] || continue
+  rm -rf "$old_dir"
+done
+
 notify_result "Gogh Themes: installed and applied '$theme_name'"
