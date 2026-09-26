@@ -35,6 +35,12 @@ Item {
   property var allThemes: []
   property var filteredThemes: []
   property string installingName: ""
+  // Omarchy's active theme dir name, e.g. "gogh-dracula" or "tokyo-night".
+  property string activeThemeSlug: ""
+  readonly property var activeTheme: GoghThemeSearch.findBySlug(root.allThemes, root.activeThemeSlug)
+  readonly property string activeThemeName: root.activeTheme
+    ? root.activeTheme.name
+    : GoghThemeSearch.prettyThemeSlug(root.activeThemeSlug)
 
   // Shares the [menu] surface tokens so this picker always matches whatever
   // Omarchy theme (Gogh-installed or not) is currently active.
@@ -114,7 +120,7 @@ Item {
   }
 
   function rebuildDisplay() {
-    var base = GoghThemeSearch.filterThemes(root.allThemes, root.filterText, root.variantFilter, 600)
+    var base = GoghThemeSearch.filterThemes(root.allThemes, root.filterText, root.variantFilter, root.allThemes.length)
 
     if (root.historyOnly) {
       var byName = {}
@@ -375,6 +381,16 @@ Item {
     onFileChanged: reload()
   }
 
+  FileView {
+    id: activeThemeFile
+    path: Quickshell.env("HOME") + "/.local/state/omarchy/current/theme.name"
+    watchChanges: true
+    printErrors: false
+    onLoaded: root.activeThemeSlug = String(text() || "").trim()
+    onLoadFailed: root.activeThemeSlug = ""
+    onFileChanged: reload()
+  }
+
   Process {
     id: loadThemesProc
     stdout: StdioCollector {
@@ -534,7 +550,7 @@ Item {
             Text {
               textFormat: Text.PlainText
               anchors.left: parent.left
-              anchors.right: countBadge.left
+              anchors.right: activeLabel.left
               anchors.rightMargin: Style.space(10)
               anchors.verticalCenter: parent.verticalCenter
               text: root.filterText || "Search Gogh themes…"
@@ -546,11 +562,30 @@ Item {
             }
 
             Text {
+              id: activeLabel
+              visible: root.activeThemeName !== ""
+              textFormat: Text.PlainText
+              anchors.right: countBadge.left
+              anchors.rightMargin: visible ? Style.space(14) : 0
+              anchors.verticalCenter: parent.verticalCenter
+              width: visible ? Math.min(implicitWidth, parent.width * 0.4) : 0
+              text: "● Active: " + root.activeThemeName
+              color: root.foreground
+              opacity: 0.7
+              font.family: root.fontFamily
+              font.pixelSize: Style.font.bodySmall
+              elide: Text.ElideRight
+            }
+
+            Text {
               id: countBadge
               textFormat: Text.PlainText
               anchors.right: parent.right
               anchors.verticalCenter: parent.verticalCenter
-              text: root.loading ? "…" : root.filteredThemes.length
+              text: root.loading ? "…"
+                : (root.filteredThemes.length === root.allThemes.length
+                  ? root.allThemes.length + " themes"
+                  : root.filteredThemes.length + " of " + root.allThemes.length + " themes")
               color: root.foreground
               opacity: 0.45
               font.family: root.fontFamily
@@ -727,6 +762,7 @@ Item {
                 readonly property var themeData: root.filteredThemes[index]
                 readonly property bool hasCursor: root.cursorActive && index === root.selectedIndex
                 readonly property bool isFavorite: themeData ? root.isFavorite(themeData.name) : false
+                readonly property bool isActive: !!themeData && !!root.activeTheme && themeData.name === root.activeTheme.name
                 property bool cellHovered: false
 
                 width: root.cellWidth - Style.space(4)
@@ -817,6 +853,20 @@ Item {
                     root.selectedIndex = cell.index
                     root.activateIndex(cell.index)
                   }
+                }
+
+                Text {
+                  visible: cell.isActive
+                  anchors.bottom: parent.bottom
+                  anchors.right: parent.right
+                  anchors.margins: Style.space(6)
+                  textFormat: Text.PlainText
+                  text: "● Active"
+                  color: cell.hasCursor ? root.selectedText : root.foreground
+                  opacity: 0.75
+                  font.family: root.fontFamily
+                  font.pixelSize: Style.font.caption
+                  font.weight: Font.DemiBold
                 }
 
                 // Favorite star: no background chip, just the glyph -- dim

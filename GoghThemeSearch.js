@@ -48,12 +48,38 @@ function filterThemes(themes, query, variantFilter, limit) {
   return out
 }
 
+// Mirrors the slug gogh-theme-install uses for the theme directory name, so
+// the active Omarchy theme (current/theme.name) can be mapped back to a Gogh
+// theme.
+function themeSlug(name) {
+  return "gogh-" + String(name || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")
+}
+
+function findBySlug(themes, slug) {
+  var values = Array.isArray(themes) ? themes : []
+  if (!slug) return null
+  for (var i = 0; i < values.length; i++) {
+    if (values[i] && values[i].name && themeSlug(values[i].name) === slug) return values[i]
+  }
+  return null
+}
+
+// Display name for a non-Gogh Omarchy theme dir name, e.g. "tokyo-night" ->
+// "Tokyo Night".
+function prettyThemeSlug(slug) {
+  return String(slug || "").split("-").filter(function(w) { return w.length > 0 })
+    .map(function(w) { return w.charAt(0).toUpperCase() + w.slice(1) }).join(" ")
+}
+
 if (typeof module !== "undefined") {
   module.exports = {
     parseThemes: parseThemes,
     normalizedQuery: normalizedQuery,
     normalizedVariant: normalizedVariant,
     matchesVariant: matchesVariant,
-    filterThemes: filterThemes
+    filterThemes: filterThemes,
+    themeSlug: themeSlug,
+    findBySlug: findBySlug,
+    prettyThemeSlug: prettyThemeSlug
   }
 }
